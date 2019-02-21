@@ -5,7 +5,7 @@ import requests
 import json
 from pprint import pprint
 
-from group import Anna, PythonLiteralOption
+from group import Anna
 import persist
 
 
@@ -143,7 +143,7 @@ def get(id, container, driver, site, status, tag):
 		filter['tag'] = json.loads(tag)
 	elif tag is not None and len(tag) > 0:
 		filter['tag'] = str(tag)
-	click.echo(requests.get(persist.get('remote') + '/v1.0/get', json=filter).json())
+	click.echo(json.dumps(requests.get(persist.get('remote') + '/v1.0/get', json=filter).json(), indent=4, sort_keys=True))
 
 
 if __name__ == '__main__':

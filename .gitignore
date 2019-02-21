@@ -7,3 +7,4 @@ api/__pychace__
 build
 dist
 anna_cli.egg-info
+config.json
