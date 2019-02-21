@@ -3,7 +3,6 @@
 import click
 import requests
 import json
-from pprint import pprint
 
 import query
 from group import Anna
@@ -50,6 +49,13 @@ def token(action, token=None):
 		click.echo(persist.get('token'))
 
 
+def echo(response):
+	if query.is_json(response.content):
+		click.echo(json.dumps(response.json(), indent=4, sort_keys=True))
+	else:
+		click.echo(response.content)
+
+
 @cli.command(context_settings=dict(help_option_names=['-h', '--help']))
 def auth():
 	"""
@@ -57,7 +63,11 @@ def auth():
 	:return:
 	"""
 	response = requests.get(persist.get('remote') + '/auth/token')
-	click.echo(json.dumps(response.json(), indent=4, sort_keys=True))
+	echo(response)
+
+
+def get_authentication_header():
+	return {'Authorization': 'Bearer ' + persist.get('token')}
 
 
 @cli.command(context_settings=dict(help_option_names=['-h', '--help']))
@@ -71,7 +81,8 @@ def push(drivers, sites):
 	:return:
 	"""
 	job = query.job(drivers, sites)
-	click.echo(json.dumps(requests.post(persist.get('remote') + '/v1.0/push', json=job).json(), indent=4, sort_keys=True))
+	response = requests.post(persist.get('remote') + '/v1.0/push', json=job, headers=get_authentication_header())
+	echo(response)
 
 
 @cli.command(context_settings=dict(help_option_names=['-h', '--help']))
@@ -93,7 +104,8 @@ def get(id, container, driver, site, status, tag):
 	:return:
 	"""
 	filter = query.filter(id=id, container=container, driver=driver, site=site, status=status, tag=tag)
-	click.echo(json.dumps(requests.get(persist.get('remote') + '/v1.0/get', json=filter).json(), indent=4, sort_keys=True))
+	response = requests.get(persist.get('remote') + '/v1.0/get', json=filter, headers=get_authentication_header())
+	echo(response)
 
 
 @cli.command(context_settings=dict(help_option_names=['-h', '--help']))
@@ -115,7 +127,8 @@ def rm(id, container, driver, site, status, tag):
 	:return:
 	"""
 	filter = query.filter(id=id, container=container, driver=driver, site=site, status=status, tag=tag)
-	click.echo(json.dumps(requests.post(persist.get('remote') + '/v1.0/rm', json=filter).json(), indent=4, sort_keys=True))
+	response = requests.post(persist.get('remote') + '/v1.0/rm', json=filter, headers=get_authentication_header())
+	echo(response)
 
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
 import json
+from pprint import pprint
 
 
 def is_json(string):
@@ -30,29 +31,18 @@ def job(drivers, sites):
 
 def filter(id, container, driver, site, status, tag):
 	result = {}
-	if is_json(id):
-		result['id'] = json.loads(id)
-	elif id is not None and len(id) > 0:
-		result['id'] = str(id)
-	if is_json(container):
-		result['container'] = json.loads(container)
-	elif container is not None and len(container) > 0:
-		result['container'] = str(container)
-	if is_json(driver):
-		result['driver'] = json.loads(driver)
-	elif driver is not None and len(driver) > 0:
-		result['driver'] = str(driver)
-	if is_json(site):
-		result['site'] = json.loads(site)
-	elif site is not None and len(site) > 0:
-		result['site'] = str(site)
-	if is_json(status):
-		result['status'] = json.loads(status)
-	elif status is not None and len(status) > 0:
-		result['status'] = str(status)
-	if is_json(tag):
-		result['tag'] = json.loads(tag)
-	elif tag is not None and len(tag) > 0:
-		result['tag'] = str(tag)
+	if id is not None and len(id) > 0:
+		result['id'] = str(id).split(',')
+	if container is not None and len(container) > 0:
+		result['container'] = str(container).split(',')
+	if driver is not None and len(driver) > 0:
+		result['driver'] = str(driver).split(',')
+	if site is not None and len(site) > 0:
+		result['site'] = str(site).split(',')
+	if status is not None and len(status) > 0:
+		result['status'] = str(status).split(',')
+	if tag is not None and len(tag) > 0:
+		result['tag'] = str(tag).split(',')
+	pprint(result)
 	return result
 
