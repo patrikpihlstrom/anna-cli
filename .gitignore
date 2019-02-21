@@ -1,0 +1,9 @@
+venv
+venv27
+.idea
+api/__pychace__
+*.db
+*.pyc
+build
+dist
+anna_cli.egg-info
