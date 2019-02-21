@@ -57,7 +57,7 @@ def auth():
 	:return:
 	"""
 	response = requests.get(persist.get('remote') + '/auth/token')
-	click.echo(response.json())
+	click.echo(json.dumps(response.json(), indent=4, sort_keys=True))
 
 
 @cli.command(context_settings=dict(help_option_names=['-h', '--help']))
@@ -71,7 +71,7 @@ def push(drivers, sites):
 	:return:
 	"""
 	job = query.job(drivers, sites)
-	pprint(requests.post(persist.get('remote') + '/v1.0/push', json=job).json())
+	click.echo(json.dumps(requests.post(persist.get('remote') + '/v1.0/push', json=job).json(), indent=4, sort_keys=True))
 
 
 @cli.command(context_settings=dict(help_option_names=['-h', '--help']))
