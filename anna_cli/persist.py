@@ -1,5 +1,5 @@
-import os, json
-
+import json
+import os
 
 config = os.path.dirname(__file__) + '/config.json'
 
@@ -9,16 +9,14 @@ def get(key):
 	if not os.path.isfile(config):
 		return ''
 	with open(config, 'r') as f:
-		config = json.load(f)
-		if key in config:
-			return config[key]
+		data = json.load(f)
+		if key in data:
+			return data[key]
 		f.close()
 
 
 def set(key, val):
 	global config
-	if not isinstance(val, str):
-		return False
 
 	if not os.path.isfile(config):
 		with open(config, 'a') as f:
@@ -28,7 +26,7 @@ def set(key, val):
 	with open(config, 'r+') as f:
 		data = json.load(f)
 		data[key] = val
-		f.seek(0)  # <--- should reset file position to the beginning.
+		f.seek(0)
 		json.dump(data, f, indent=4)
-		f.truncate()  # remove remaining part
+		f.truncate()
 		f.close()

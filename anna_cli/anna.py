@@ -5,6 +5,7 @@ import requests
 import json
 from pprint import pprint
 
+import query
 from group import Anna
 import persist
 
@@ -59,44 +60,17 @@ def auth():
 	click.echo(response.json())
 
 
-def is_json(string):
-	try:
-		json.loads(string)
-	except ValueError:
-		return False
-	except TypeError:
-		return False
-	return True
-
-
 @cli.command(context_settings=dict(help_option_names=['-h', '--help']))
 @click.option('--drivers', '-d', default=[])
 @click.option('--sites', '-s', default=[])
 def push(drivers, sites):
 	"""
-	get jobs based on the provided filter
-	:param id:
-	:param container:
-	:param driver:
-	:param site:
-	:param status:
-	:param tag:
+	push a new job to the queue
+	:param drivers:
+	:param sites:
 	:return:
 	"""
-	job = {}
-	if is_json(drivers):
-		job['drivers'] = json.loads(drivers)
-	elif drivers is not None and len(drivers) > 0:
-		job['drivers'] = str(drivers)
-	if is_json(sites):
-		job['sites'] = json.loads(sites)
-	elif sites is not None and len(sites) > 0:
-		job['sites'] = str(sites)
-	if not isinstance(job['drivers'], list):
-		job['drivers'] = [job['drivers']]
-	if not isinstance(job['sites'], list):
-		job['sites'] = [job['sites']]
-	print(job)
+	job = query.job(drivers, sites)
 	pprint(requests.post(persist.get('remote') + '/v1.0/push', json=job).json())
 
 
@@ -118,32 +92,30 @@ def get(id, container, driver, site, status, tag):
 	:param tag:
 	:return:
 	"""
-	filter = {}
-	if is_json(id):
-		filter['id'] = json.loads(id)
-	elif id is not None and len(id) > 0:
-		filter['id'] = str(id)
-	if is_json(container):
-		filter['container'] = json.loads(container)
-	elif container is not None and len(container) > 0:
-		filter['container'] = str(container)
-	if is_json(driver):
-		filter['driver'] = json.loads(driver)
-	elif driver is not None and len(driver) > 0:
-		filter['driver'] = str(driver)
-	if is_json(site):
-		filter['site'] = json.loads(site)
-	elif site is not None and len(site) > 0:
-		filter['site'] = str(site)
-	if is_json(status):
-		filter['status'] = json.loads(status)
-	elif status is not None and len(status) > 0:
-		filter['status'] = str(status)
-	if is_json(tag):
-		filter['tag'] = json.loads(tag)
-	elif tag is not None and len(tag) > 0:
-		filter['tag'] = str(tag)
+	filter = query.filter(id=id, container=container, driver=driver, site=site, status=status, tag=tag)
 	click.echo(json.dumps(requests.get(persist.get('remote') + '/v1.0/get', json=filter).json(), indent=4, sort_keys=True))
+
+
+@cli.command(context_settings=dict(help_option_names=['-h', '--help']))
+@click.option('--id', '-i', default=[])
+@click.option('--container', '-c', default=[])
+@click.option('--driver', '-d', default=[])
+@click.option('--site', '-s', default=[])
+@click.option('--status', '-S', default=[])
+@click.option('--tag', '-t', default=[])
+def rm(id, container, driver, site, status, tag):
+	"""
+	get jobs based on the provided filter
+	:param id:
+	:param container:
+	:param driver:
+	:param site:
+	:param status:
+	:param tag:
+	:return:
+	"""
+	filter = query.filter(id=id, container=container, driver=driver, site=site, status=status, tag=tag)
+	click.echo(json.dumps(requests.post(persist.get('remote') + '/v1.0/rm', json=filter).json(), indent=4, sort_keys=True))
 
 
 if __name__ == '__main__':
