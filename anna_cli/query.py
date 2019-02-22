@@ -14,9 +14,9 @@ def is_json(string):
 def job(drivers, sites):
 	result = {}
 	if drivers is not None and len(drivers) > 0:
-		result['drivers'] = str(drivers).split(',')
+		result['driver'] = str(drivers).split(',')
 	if sites is not None and len(sites) > 0:
-		result['sites'] = str(sites).split(',')
+		result['site'] = str(sites).split(',')
 	return result
 
 
