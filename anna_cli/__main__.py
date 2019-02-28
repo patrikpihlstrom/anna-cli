@@ -56,13 +56,14 @@ def echo(response):
 		click.echo(response.content)
 
 
+@click.argument('email')
 @cli.command(context_settings=dict(help_option_names=['-h', '--help']))
-def auth():
+def auth(email):
 	"""
 	get an authentication token from the remote server
 	:return:
 	"""
-	response = requests.get(persist.get('remote') + '/auth/token')
+	response = requests.get(persist.get('remote') + '/auth/token', headers={'Authorization': email})
 	echo(response)
 
 
