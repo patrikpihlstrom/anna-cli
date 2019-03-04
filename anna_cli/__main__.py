@@ -64,6 +64,8 @@ def auth(email):
 	:return:
 	"""
 	response = requests.get(persist.get('remote') + '/auth/token', headers={'Authorization': email})
+	if query.is_json(response.content) and 'token' in response.json():
+		persist.set('token', response.json()['token'])
 	echo(response)
 
 
