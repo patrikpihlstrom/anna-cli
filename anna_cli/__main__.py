@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/local/bin/python3
 
 import click
 import requests
@@ -84,7 +84,7 @@ def push(drivers, sites):
 	:return:
 	"""
 	job = query.job(drivers, sites)
-	response = requests.post(persist.get('remote') + '/v1.0/push', json=job, headers=get_authentication_header())
+	response = requests.post(persist.get('remote') + '/job/push', json=job, headers=get_authentication_header())
 	echo(response)
 
 
@@ -107,7 +107,7 @@ def get(id, container, driver, site, status, tag):
 	:return:
 	"""
 	filter = query.filter(id=id, container=container, driver=driver, site=site, status=status, tag=tag)
-	response = requests.get(persist.get('remote') + '/v1.0/get', json=filter, headers=get_authentication_header())
+	response = requests.get(persist.get('remote') + '/job/get', json=filter, headers=get_authentication_header())
 	echo(response)
 
 
@@ -130,7 +130,7 @@ def rm(id, container, driver, site, status, tag):
 	:return:
 	"""
 	filter = query.filter(id=id, container=container, driver=driver, site=site, status=status, tag=tag)
-	response = requests.post(persist.get('remote') + '/v1.0/rm', json=filter, headers=get_authentication_header())
+	response = requests.post(persist.get('remote') + '/job/rm', json=filter, headers=get_authentication_header())
 	echo(response)
 
 
