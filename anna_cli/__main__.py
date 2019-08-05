@@ -1,12 +1,14 @@
 #!/usr/local/bin/python3
 
 import click
-import requests
 import json
 
-import query
 from group import Anna
 import persist
+from anna_client.client import Client
+
+client = Client(endpoint=persist.get('endpoint'))
+client.inject_token(persist.get('token'))
 
 
 @click.group(Anna)
@@ -19,18 +21,18 @@ def cli():
 
 @cli.command(context_settings=dict(help_option_names=['-h', '--help']))
 @click.argument('action')
-@click.argument('remote', required=False)
-def remote(action, remote=None):
+@click.argument('endpoint', required=False)
+def endpoint(action, endpoint=None):
 	"""
-	get or set the remote
+	get or set the endpoint
 	:param action:
-	:param remote:
+	:param endpoint:
 	:return:
 	"""
 	if action == 'set':
-		persist.set('remote', remote)
+		persist.set('endpoint', endpoint)
 	elif action == 'get':
-		click.echo(persist.get('remote'))
+		click.echo(persist.get('endpoint'))
 
 
 @cli.command(context_settings=dict(help_option_names=['-h', '--help']))
@@ -49,28 +51,24 @@ def token(action, token=None):
 		click.echo(persist.get('token'))
 
 
+def is_json(string):
+	try:
+		json.loads(string)
+	except ValueError:
+		return False
+	except TypeError:
+		return False
+	return True
+
+
 def echo(response):
-	if query.is_json(response.content):
-		click.echo(json.dumps(response.json(), indent=4, sort_keys=True))
+	if hasattr(response, 'content'):
+		if is_json(response.content):
+			click.echo(json.dumps(response.json(), indent=4, sort_keys=True))
+		else:
+			click.echo(response.content)
 	else:
-		click.echo(response.content)
-
-
-@click.argument('email')
-@cli.command(context_settings=dict(help_option_names=['-h', '--help']))
-def auth(email):
-	"""
-	get an authentication token from the remote server
-	:return:
-	"""
-	response = requests.get(persist.get('remote') + '/auth/token', headers={'Authorization': email})
-	if query.is_json(response.content) and 'token' in response.json():
-		persist.set('token', response.json()['token'])
-	echo(response)
-
-
-def get_authentication_header():
-	return {'Authorization': 'Bearer ' + persist.get('token')}
+		click.echo(json.dumps(response, indent=4, sort_keys=True))
 
 
 @cli.command(context_settings=dict(help_option_names=['-h', '--help']))
@@ -83,8 +81,18 @@ def push(drivers, sites):
 	:param sites:
 	:return:
 	"""
-	job = query.job(drivers, sites)
-	response = requests.post(persist.get('remote') + '/job/push', json=job, headers=get_authentication_header())
+	jobs = []
+	drivers = drivers.split(',')
+	sites = sites.split(',')
+	if isinstance(drivers, str):
+		drivers = [drivers]
+	if isinstance(sites, str):
+		sites = [sites]
+
+	for driver in drivers:
+		for site in sites:
+			jobs.append({'site': site, 'driver': driver})
+	response = client.create_jobs(data=jobs)
 	echo(response)
 
 
@@ -94,8 +102,39 @@ def push(drivers, sites):
 @click.option('--driver', '-d', default=[])
 @click.option('--site', '-s', default=[])
 @click.option('--status', '-S', default=[])
-@click.option('--tag', '-t', default=[])
-def get(id, container, driver, site, status, tag):
+def get(id, container, driver, site, status):
+	"""
+	get jobs based on the provided filter
+	:param id:
+	:param container:
+	:param driver:
+	:param site:
+	:param status:
+	:return:
+	"""
+	where = {}
+	if len(id) > 0:
+		where['id_in'] = id
+	if len(container) > 0:
+		where['container_in'] = container
+	if len(driver) > 0:
+		where['driver_in'] = driver
+	if len(site) > 0:
+		where['site_in'] = site
+	if len(status) > 0:
+		where['status_in'] = status
+	response = client.get_jobs(
+		where=where, fields=('id', 'site', 'driver', 'status', 'updatedAt', 'container', 'log'))
+	echo(response)
+
+
+@cli.command(context_settings=dict(help_option_names=['-h', '--help']))
+@click.option('--id', '-i', default=[])
+@click.option('--container', '-c', default=[])
+@click.option('--driver', '-d', default=[])
+@click.option('--site', '-s', default=[])
+@click.option('--status', '-S', default=[])
+def rm(id, container, driver, site, status):
 	"""
 	get jobs based on the provided filter
 	:param id:
@@ -106,31 +145,19 @@ def get(id, container, driver, site, status, tag):
 	:param tag:
 	:return:
 	"""
-	filter = query.filter(id=id, container=container, driver=driver, site=site, status=status, tag=tag)
-	response = requests.get(persist.get('remote') + '/job/get', json=filter, headers=get_authentication_header())
-	echo(response)
-
-
-@cli.command(context_settings=dict(help_option_names=['-h', '--help']))
-@click.option('--id', '-i', default=[])
-@click.option('--container', '-c', default=[])
-@click.option('--driver', '-d', default=[])
-@click.option('--site', '-s', default=[])
-@click.option('--status', '-S', default=[])
-@click.option('--tag', '-t', default=[])
-def rm(id, container, driver, site, status, tag):
-	"""
-	get jobs based on the provided filter
-	:param id:
-	:param container:
-	:param driver:
-	:param site:
-	:param status:
-	:param tag:
-	:return:
-	"""
-	filter = query.filter(id=id, container=container, driver=driver, site=site, status=status, tag=tag)
-	response = requests.post(persist.get('remote') + '/job/rm', json=filter, headers=get_authentication_header())
+	where = {}
+	if len(id) > 0:
+		where['id_in'] = id
+	if len(container) > 0:
+		where['container_in'] = container
+	if len(driver) > 0:
+		where['driver_in'] = driver
+	if len(site) > 0:
+		where['site_in'] = site
+	if len(status) > 0:
+		where['status_in'] = status
+	response = client.delete_jobs(
+		where=where)
 	echo(response)
 
 
